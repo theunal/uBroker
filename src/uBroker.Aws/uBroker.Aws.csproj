@@ -7,7 +7,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>uBroker.Aws</RootNamespace>
     <Description>AWS SQS + SNS implementation for uBroker</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/theunal/uBroker</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/theunal/uBroker</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.Aws.md</PackageReadmeFile>
+    <PackageIcon>logo.png</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\docs\README.Aws.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\docs\logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="uBroker.DependencyInjection" />

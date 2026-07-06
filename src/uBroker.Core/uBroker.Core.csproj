@@ -8,7 +8,18 @@
     <RootNamespace>uBroker</RootNamespace>
     <Description>High-performance, zero-allocation messaging abstractions for .NET</Description>
     <PackageTags>messaging;broker;high-performance;zero-allocation</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/theunal/uBroker</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/theunal/uBroker</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.Core.md</PackageReadmeFile>
+    <PackageIcon>logo.png</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\docs\README.Core.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\docs\logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="uBroker.RabbitMQ" />

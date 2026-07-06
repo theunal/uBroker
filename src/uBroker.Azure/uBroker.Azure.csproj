@@ -7,7 +7,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>uBroker.Azure</RootNamespace>
     <Description>Azure Service Bus + Event Hubs implementation for uBroker</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/theunal/uBroker</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/theunal/uBroker</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.Azure.md</PackageReadmeFile>
+    <PackageIcon>logo.png</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\docs\README.Azure.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\docs\logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\uBroker.Core\uBroker.Core.csproj" />

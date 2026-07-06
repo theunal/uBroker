@@ -7,7 +7,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>uBroker.DependencyInjection</RootNamespace>
     <Description>Dependency injection extensions for uBroker — AddUBroker() registration</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/theunal/uBroker</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/theunal/uBroker</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.DependencyInjection.md</PackageReadmeFile>
+    <PackageIcon>logo.png</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\docs\README.DependencyInjection.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\docs\logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\uBroker.Core\uBroker.Core.csproj" />
