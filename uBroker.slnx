@@ -14,4 +14,5 @@
   <Project Path="samples\uBroker.Sample.Kafka\uBroker.Sample.Kafka.csproj" />
   <Project Path="samples\uBroker.Sample.Azure\uBroker.Sample.Azure.csproj" />
   <Project Path="samples\uBroker.Sample.Aws\uBroker.Sample.Aws.csproj" />
+  <Project Path="samples\uBroker.Sample.RawBinary\uBroker.Sample.RawBinary.csproj" />
 </Solution>
