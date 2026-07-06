@@ -2,7 +2,6 @@ using System.Buffers;
 using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Diagnosers;
-using uBroker;
 using uBroker.RabbitMQ.Serialization;
 
 namespace uBroker.Benchmarks;
@@ -68,7 +67,7 @@ public class RawBinaryBenchmark
         _bufferWriter.ResetWrittenCount();
         var written = _jsonSerializer.Serialize(_message, _bufferWriter);
         return _jsonSerializer.Deserialize<StockPriceEvent>(
-            _bufferWriter.WrittenSpan.Slice(0, written));
+            _bufferWriter.WrittenSpan[..written]);
     }
 
     [Benchmark]

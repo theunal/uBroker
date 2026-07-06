@@ -48,7 +48,7 @@ public sealed class AwsSnsPublisher(
                     {
                         TopicArn = destination,
                         Message = Convert.ToBase64String(rented, 0, size),
-                        MessageAttributes = new Dictionary<string, MessageAttributeValue>(),
+                        MessageAttributes = [],
                     };
                 }
                 finally
@@ -70,7 +70,7 @@ public sealed class AwsSnsPublisher(
                 {
                     TopicArn = destination,
                     Message = body,
-                    MessageAttributes = new Dictionary<string, MessageAttributeValue>(),
+                    MessageAttributes = [],
                 };
                 request.MessageAttributes[WireFormat.ContentTypeHeaderKey] = new MessageAttributeValue
                 {

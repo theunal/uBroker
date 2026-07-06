@@ -1,4 +1,3 @@
-using uBroker;
 using Xunit;
 
 namespace uBroker.UnitTests;
