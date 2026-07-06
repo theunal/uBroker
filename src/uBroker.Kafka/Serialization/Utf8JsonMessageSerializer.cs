@@ -1,6 +1,5 @@
 using System.Buffers;
 using System.Text.Json;
-using uBroker;
 
 namespace uBroker.Kafka.Serialization;
 

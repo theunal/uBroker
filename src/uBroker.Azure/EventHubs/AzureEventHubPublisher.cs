@@ -2,7 +2,6 @@ using System.Buffers;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using uBroker.Diagnostics;
 
 namespace uBroker.Azure.EventHubs;
@@ -17,12 +16,10 @@ namespace uBroker.Azure.EventHubs;
 /// </summary>
 public sealed class AzureEventHubPublisher(
     EventHubProducerClient producer,
-    IOptions<AzureEventHubOptions> options,
     IMessageSerializer serializer,
     UBrokerDiagnostics diagnostics,
     ILogger<AzureEventHubPublisher> logger) : IPartitionedPublisher, IAsyncDisposable, IDisposable
 {
-    private readonly AzureEventHubOptions _options = options.Value;
     private bool _disposed;
 
     /// <inheritdoc/>

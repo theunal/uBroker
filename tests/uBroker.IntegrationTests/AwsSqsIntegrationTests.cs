@@ -32,7 +32,7 @@ public class AwsSqsIntegrationTests : IAsyncLifetime
         _sqsClient = new AmazonSQSClient(new Amazon.Runtime.BasicAWSCredentials("test", "test"), config);
         var options = new AwsSqsOptions { Region = Region, ServiceURL = ServiceUrl, AccessKey = "test", SecretKey = "test", WaitTimeSeconds = 1 };
         var diag = new UBrokerDiagnostics();
-        _publisher = new AwsSqsPublisher(_sqsClient, Options.Create(options), new Utf8JsonMessageSerializer(), diag, NullLogger<AwsSqsPublisher>.Instance);
+        _publisher = new AwsSqsPublisher(_sqsClient, new Utf8JsonMessageSerializer(), diag, NullLogger<AwsSqsPublisher>.Instance);
         _consumer = new AwsSqsConsumer(_sqsClient, Options.Create(options), diag, NullLogger<AwsSqsConsumer>.Instance);
         return ValueTask.CompletedTask;
     }

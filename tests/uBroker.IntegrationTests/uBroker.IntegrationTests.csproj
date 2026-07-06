@@ -28,6 +28,7 @@
     <PackageReference Include="Confluent.Kafka" Version="2.*" />
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.*" />
     <PackageReference Include="AWSSDK.SQS" Version="4.*" />
+    <PackageReference Include="AWSSDK.SimpleNotificationService" Version="4.*" />
   </ItemGroup>
 
 </Project>

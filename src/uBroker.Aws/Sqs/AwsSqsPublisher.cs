@@ -3,7 +3,6 @@ using System.Text;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using uBroker.Diagnostics;
 
 namespace uBroker.Aws.Sqs;
@@ -21,12 +20,10 @@ namespace uBroker.Aws.Sqs;
 /// </summary>
 public sealed class AwsSqsPublisher(
     AmazonSQSClient client,
-    IOptions<AwsSqsOptions> options,
     IMessageSerializer serializer,
     UBrokerDiagnostics diagnostics,
     ILogger<AwsSqsPublisher> logger) : IUBrokerPublisher, IAsyncDisposable, IDisposable
 {
-    private readonly AwsSqsOptions _options = options.Value;
     private bool _disposed;
 
     /// <inheritdoc/>

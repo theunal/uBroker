@@ -15,26 +15,14 @@ namespace uBroker.Kafka;
 /// - ConsumeOptions.ConsumerGroup → consumer group (required)
 /// - CheckpointAsync → commits offset for the partition
 /// </summary>
-public sealed class KafkaConsumer : ICheckpointableConsumer, IAsyncDisposable, IDisposable
+public sealed class KafkaConsumer(
+    IOptions<KafkaOptions> options,
+    UBrokerDiagnostics diagnostics,
+    ILogger<KafkaConsumer> logger) : ICheckpointableConsumer, IAsyncDisposable, IDisposable
 {
-    private readonly KafkaOptions _options;
-    private readonly IMessageSerializer _serializer;
-    private readonly UBrokerDiagnostics _diagnostics;
-    private readonly ILogger<KafkaConsumer> _logger;
-    private readonly List<IConsumer<string, byte[]>> _consumers = new();
+    private readonly KafkaOptions _options = options.Value;
+    private readonly List<IConsumer<string, byte[]>> _consumers = [];
     private bool _disposed;
-
-    public KafkaConsumer(
-        IOptions<KafkaOptions> options,
-        IMessageSerializer serializer,
-        UBrokerDiagnostics diagnostics,
-        ILogger<KafkaConsumer> logger)
-    {
-        _options = options.Value;
-        _serializer = serializer;
-        _diagnostics = diagnostics;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Subscribe to a Kafka topic. Each call creates a new consumer instance
@@ -102,12 +90,12 @@ public sealed class KafkaConsumer : ICheckpointableConsumer, IAsyncDisposable, I
                             try
                             {
                                 consumer.Commit(result);
-                                _logger.LogTrace("Committed offset {Offset} for {Topic}/{Partition}",
+                                logger.LogTrace("Committed offset {Offset} for {Topic}/{Partition}",
                                     result.Offset, result.Topic, result.Partition);
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogError(ex, "Failed to commit offset for {Topic}/{Partition}",
+                                logger.LogError(ex, "Failed to commit offset for {Topic}/{Partition}",
                                     result.Topic, result.Partition);
                             }
                             return ValueTask.CompletedTask;
@@ -138,18 +126,18 @@ public sealed class KafkaConsumer : ICheckpointableConsumer, IAsyncDisposable, I
                         await handler(message, context).ConfigureAwait(false);
                         var serializerTag = headers.TryGetValue(WireFormat.ContentTypeHeaderKey, out var ctHdr)
                             && ctHdr == WireFormat.RawBinaryContentType ? "raw" : "json";
-                        _diagnostics.RecordMessagesConsumed(1, serializerTag);
+                        diagnostics.RecordMessagesConsumed(1, serializerTag);
                     }
                     catch (ConsumeException ex)
                     {
-                        _logger.LogError(ex, "Kafka consume error: {Error}", ex.Error.Reason);
+                        logger.LogError(ex, "Kafka consume error: {Error}", ex.Error.Reason);
                     }
                 }
             }
             catch (OperationCanceledException) { }
         }, cts.Token);
 
-        return new Subscription(consumer, cts, consumeTask, topic, _logger);
+        return new Subscription(consumer, cts, consumeTask, topic, logger);
     }
 
     /// <summary>

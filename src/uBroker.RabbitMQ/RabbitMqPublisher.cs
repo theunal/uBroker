@@ -23,26 +23,15 @@ namespace uBroker.RabbitMQ;
 /// - PublishOptions.RoutingKey → routing key
 /// - PublishOptions.Headers → BasicProperties.Headers
 /// </summary>
-public sealed class RabbitMqPublisher : IUBrokerPublisher, IAsyncDisposable, IDisposable
+public sealed class RabbitMqPublisher(
+    BatchPublishWorker batchWorker,
+    IOptions<RabbitMqOptions> options,
+    UBrokerDiagnostics diagnostics,
+    ILogger<RabbitMqPublisher> logger) : IUBrokerPublisher, IAsyncDisposable, IDisposable
 {
-    private readonly BatchPublishWorker _batchWorker;
-    private readonly RabbitMqOptions _options;
-    private readonly UBrokerDiagnostics _diagnostics;
-    private readonly ILogger<RabbitMqPublisher> _logger;
+    private readonly RabbitMqOptions _options = options.Value;
     private readonly Utf8JsonMessageSerializer _jsonSerializer = new();
     private bool _disposed;
-
-    public RabbitMqPublisher(
-        BatchPublishWorker batchWorker,
-        IOptions<RabbitMqOptions> options,
-        UBrokerDiagnostics diagnostics,
-        ILogger<RabbitMqPublisher> logger)
-    {
-        _batchWorker = batchWorker;
-        _options = options.Value;
-        _diagnostics = diagnostics;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Publish a message to the specified exchange.
@@ -116,7 +105,7 @@ public sealed class RabbitMqPublisher : IUBrokerPublisher, IAsyncDisposable, IDi
                 props.Expiration = ttl.ToString();
             }
 
-            using var publishActivity = _diagnostics.StartPublishActivity(exchange, routingKey);
+            using var publishActivity = diagnostics.StartPublishActivity(exchange, routingKey);
 
             var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -130,26 +119,26 @@ public sealed class RabbitMqPublisher : IUBrokerPublisher, IAsyncDisposable, IDi
                 RentedBuffer = rentedBuffer,
             };
 
-            if (!_batchWorker.Writer.TryWrite(request))
+            if (!batchWorker.Writer.TryWrite(request))
             {
                 return WriteSlowAsync(request, ct);
             }
 
-            _logger.LogTrace("Enqueued message to {Exchange}/{RoutingKey}", exchange, routingKey);
+            logger.LogTrace("Enqueued message to {Exchange}/{RoutingKey}", exchange, routingKey);
             return ValueTask.CompletedTask;
         }
         catch (Exception ex)
         {
-            _diagnostics.RecordPublishError();
-            _logger.LogError(ex, "Failed to publish message to {Exchange}/{RoutingKey}", exchange, routingKey);
+            diagnostics.RecordPublishError();
+            logger.LogError(ex, "Failed to publish message to {Exchange}/{RoutingKey}", exchange, routingKey);
             return ValueTask.FromException(ex);
         }
     }
 
     private async ValueTask WriteSlowAsync(PublishRequest request, CancellationToken ct)
     {
-        await _batchWorker.Writer.WaitToWriteAsync(ct).ConfigureAwait(false);
-        _batchWorker.Writer.TryWrite(request);
+        await batchWorker.Writer.WaitToWriteAsync(ct).ConfigureAwait(false);
+        batchWorker.Writer.TryWrite(request);
     }
 
     public ValueTask DisposeAsync()

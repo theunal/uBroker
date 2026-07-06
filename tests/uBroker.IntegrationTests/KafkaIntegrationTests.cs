@@ -1,8 +1,6 @@
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using System.Text;
-using uBroker;
 using uBroker.Diagnostics;
 using uBroker.Kafka;
 using uBroker.Kafka.Serialization;
@@ -23,8 +21,8 @@ public class KafkaIntegrationTests : IAsyncLifetime
         var producer = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = BootstrapServers, LingerMs = 5, BatchSize = 16384 }).Build();
         var serializer = new Utf8JsonMessageSerializer();
         var diag = new UBrokerDiagnostics();
-        _publisher = new KafkaPublisher(producer, Options.Create(kafkaOptions), serializer, diag, NullLogger<KafkaPublisher>.Instance);
-        _consumer = new KafkaConsumer(Options.Create(kafkaOptions), serializer, diag, NullLogger<KafkaConsumer>.Instance);
+        _publisher = new KafkaPublisher(producer, serializer, diag, NullLogger<KafkaPublisher>.Instance);
+        _consumer = new KafkaConsumer(Options.Create(kafkaOptions), diag, NullLogger<KafkaConsumer>.Instance);
         return ValueTask.CompletedTask;
     }
 

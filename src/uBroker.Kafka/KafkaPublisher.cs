@@ -3,9 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using uBroker.Diagnostics;
-using uBroker.Kafka.Serialization;
 
 namespace uBroker.Kafka;
 
@@ -17,28 +15,13 @@ namespace uBroker.Kafka;
 /// - PublishOptions.PartitionKey → Message.Key (used by partitioner)
 /// - PublishOptions.Headers → Message Headers
 /// </summary>
-public sealed class KafkaPublisher : IPartitionedPublisher, IAsyncDisposable, IDisposable
+public sealed class KafkaPublisher(
+    IProducer<string, byte[]> producer,
+    IMessageSerializer serializer,
+    UBrokerDiagnostics diagnostics,
+    ILogger<KafkaPublisher> logger) : IPartitionedPublisher, IAsyncDisposable, IDisposable
 {
-    private readonly IProducer<string, byte[]> _producer;
-    private readonly KafkaOptions _options;
-    private readonly IMessageSerializer _serializer;
-    private readonly UBrokerDiagnostics _diagnostics;
-    private readonly ILogger<KafkaPublisher> _logger;
     private bool _disposed;
-
-    public KafkaPublisher(
-        IProducer<string, byte[]> producer,
-        IOptions<KafkaOptions> options,
-        IMessageSerializer serializer,
-        UBrokerDiagnostics diagnostics,
-        ILogger<KafkaPublisher> logger)
-    {
-        _producer = producer;
-        _options = options.Value;
-        _serializer = serializer;
-        _diagnostics = diagnostics;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Publish a message to a Kafka topic. The destination maps to the topic name.
@@ -79,7 +62,7 @@ public sealed class KafkaPublisher : IPartitionedPublisher, IAsyncDisposable, ID
             else
             {
                 var bufferWriter = new ArrayBufferWriter<byte>(4096);
-                var written = _serializer.Serialize(message, bufferWriter);
+                var written = serializer.Serialize(message, bufferWriter);
                 body = bufferWriter.WrittenSpan.Slice(0, written).ToArray();
                 contentType = WireFormat.JsonContentType;
             }
@@ -112,25 +95,25 @@ public sealed class KafkaPublisher : IPartitionedPublisher, IAsyncDisposable, ID
             kafkaMessage.Headers ??= new Headers();
             kafkaMessage.Headers.Add(WireFormat.ContentTypeHeaderKey, Encoding.UTF8.GetBytes(contentType));
 
-            using var publishActivity = _diagnostics.StartPublishActivity(topic, partitionKey ?? "");
+            using var publishActivity = diagnostics.StartPublishActivity(topic, partitionKey ?? "");
 
             // ProduceAsync is the synchronous-over-async path. Confluent.Kafka handles
             // internal buffering, so this doesn't block on network I/O.
-            _producer.Produce(topic, kafkaMessage, report =>
+            producer.Produce(topic, kafkaMessage, report =>
             {
                 if (report.Error.IsError)
                 {
-                    _logger.LogError("Kafka publish failed: {Error}", report.Error.Reason);
+                    logger.LogError("Kafka publish failed: {Error}", report.Error.Reason);
                 }
             });
 
-            _diagnostics.RecordMessagesPublished(1, contentType == WireFormat.RawBinaryContentType ? "raw" : "json");
+            diagnostics.RecordMessagesPublished(1, contentType == WireFormat.RawBinaryContentType ? "raw" : "json");
             return ValueTask.CompletedTask;
         }
         catch (Exception ex)
         {
-            _diagnostics.RecordPublishError();
-            _logger.LogError(ex, "Failed to publish to Kafka topic {Topic}", topic);
+            diagnostics.RecordPublishError();
+            logger.LogError(ex, "Failed to publish to Kafka topic {Topic}", topic);
             return ValueTask.FromException(ex);
         }
     }
@@ -139,7 +122,7 @@ public sealed class KafkaPublisher : IPartitionedPublisher, IAsyncDisposable, ID
     {
         if (_disposed) return ValueTask.CompletedTask;
         _disposed = true;
-        _producer.Flush(CancellationToken.None);
+        producer.Flush(CancellationToken.None);
         return ValueTask.CompletedTask;
     }
 
@@ -147,6 +130,6 @@ public sealed class KafkaPublisher : IPartitionedPublisher, IAsyncDisposable, ID
     {
         if (_disposed) return;
         _disposed = true;
-        _producer.Flush(TimeSpan.FromSeconds(5));
+        producer.Flush(TimeSpan.FromSeconds(5));
     }
 }

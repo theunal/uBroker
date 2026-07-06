@@ -197,9 +197,13 @@ public sealed class BatchPublishWorker : BackgroundService
         }
         catch (Exception ex)
         {
-            // Batch failed — fail all waiting tasks.
+            // Batch failed — fail all waiting tasks and return rented buffers.
             foreach (var request in batch)
             {
+                if (request.RentedBuffer is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(request.RentedBuffer);
+                }
                 request.Tcs.TrySetException(ex);
             }
             pooled.IsHealthy = false;
@@ -232,6 +236,10 @@ public sealed class BatchPublishWorker : BackgroundService
                         basicProperties: request.Properties,
                         body: request.Body,
                         cancellationToken: ct).ConfigureAwait(false);
+                    if (request.RentedBuffer is not null)
+                    {
+                        ArrayPool<byte>.Shared.Return(request.RentedBuffer);
+                    }
                     request.Tcs.TrySetResult();
                     flushed++;
                 }
@@ -242,6 +250,10 @@ public sealed class BatchPublishWorker : BackgroundService
             }
             catch (Exception ex)
             {
+                if (request.RentedBuffer is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(request.RentedBuffer);
+                }
                 _logger.LogError(ex, "Failed to flush message during shutdown");
                 request.Tcs.TrySetException(ex);
             }
