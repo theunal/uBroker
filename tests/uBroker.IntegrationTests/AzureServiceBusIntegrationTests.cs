@@ -56,13 +56,15 @@ public class AzureServiceBusIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PublishAsync_ShouldNotThrow()
     {
+        var ct = TestContext.Current.CancellationToken;
         var message = new SbTestMessage { Id = 1, Content = "hello" };
-        await _publisher!.PublishAsync("default", message, null, CancellationToken.None);
+        await _publisher!.PublishAsync("default", message, null, ct);
     }
 
     [Fact]
     public async Task PublishWithHeaders_ShouldWork()
     {
+        var ct = TestContext.Current.CancellationToken;
         var message = new SbTestMessage { Id = 1, Content = "with-headers" };
         await _publisher!.PublishAsync("default", message,
             new PublishOptions
@@ -71,12 +73,13 @@ public class AzureServiceBusIntegrationTests : IAsyncLifetime
                 {
                     ["custom-header"] = "custom-value",
                 }
-            }, CancellationToken.None);
+            }, ct);
     }
 
     [Fact]
     public async Task PublishAndConsume_ShouldReceiveMessage()
     {
+        var ct = TestContext.Current.CancellationToken;
         var received = new TaskCompletionSource<SbTestMessage>();
 
         using var sub = _consumer!.Subscribe<SbTestMessage>("ubroker.sample", async (msg, ctx) =>
@@ -85,10 +88,10 @@ public class AzureServiceBusIntegrationTests : IAsyncLifetime
             await ctx.AckAsync();
         }, new ConsumeOptions { MaxConcurrentCalls = 1 });
 
-        await Task.Delay(2000);
+        await Task.Delay(2000, ct);
 
         var message = new SbTestMessage { Id = 42, Content = "sb-integration" };
-        await _publisher!.PublishAsync("default", message, null, CancellationToken.None);
+        await _publisher!.PublishAsync("default", message, null, ct);
     }
 }
 

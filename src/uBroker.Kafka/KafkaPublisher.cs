@@ -69,7 +69,7 @@ public sealed class KafkaPublisher(
 
             var kafkaMessage = new Message<string, byte[]>
             {
-                Key = partitionKey,
+                Key = partitionKey!,
                 Value = body,
             };
 
