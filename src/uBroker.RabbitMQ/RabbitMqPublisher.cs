@@ -29,6 +29,7 @@ public sealed class RabbitMqPublisher : IUBrokerPublisher, IAsyncDisposable, IDi
     private readonly RabbitMqOptions _options;
     private readonly UBrokerDiagnostics _diagnostics;
     private readonly ILogger<RabbitMqPublisher> _logger;
+    private readonly Utf8JsonMessageSerializer _jsonSerializer = new();
     private bool _disposed;
 
     public RabbitMqPublisher(
@@ -71,9 +72,8 @@ public sealed class RabbitMqPublisher : IUBrokerPublisher, IAsyncDisposable, IDi
             }
             else
             {
-                var serializer = new Utf8JsonMessageSerializer();
                 var bufferWriter = new ArrayBufferWriter<byte>(4096);
-                var written = serializer.Serialize(message, bufferWriter);
+                var written = _jsonSerializer.Serialize(message, bufferWriter);
                 buffer = bufferWriter.WrittenMemory;
                 contentType = WireFormat.JsonContentType;
             }

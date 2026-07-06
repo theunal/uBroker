@@ -2,6 +2,7 @@ using System.Buffers;
 using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.Logging;
 using uBroker.Diagnostics;
+using uBroker.Azure.Internals;
 
 namespace uBroker.Azure.ServiceBus;
 
@@ -13,16 +14,28 @@ namespace uBroker.Azure.ServiceBus;
 /// - PublishOptions.SessionId → ServiceBusMessage.SessionId
 /// - PublishOptions.Headers → ServiceBusMessage.ApplicationProperties
 /// </summary>
-public sealed class AzureServiceBusPublisher(
-    ServiceBusSender sender,
-    IMessageSerializer serializer,
-    UBrokerDiagnostics diagnostics,
-    ILogger<AzureServiceBusPublisher> logger) : IUBrokerPublisher, IAsyncDisposable, IDisposable
+public sealed class AzureServiceBusPublisher : IUBrokerPublisher, IAsyncDisposable, IDisposable
 {
+    private readonly ServiceBusSender _sender;
+    private readonly IMessageSerializer _serializer;
+    private readonly UBrokerDiagnostics _diagnostics;
+    private readonly ILogger<AzureServiceBusPublisher> _logger;
     private bool _disposed;
 
+    public AzureServiceBusPublisher(
+        ServiceBusSender sender,
+        IMessageSerializer serializer,
+        UBrokerDiagnostics diagnostics,
+        ILogger<AzureServiceBusPublisher> logger)
+    {
+        _sender = sender;
+        _serializer = serializer;
+        _diagnostics = diagnostics;
+        _logger = logger;
+    }
+
     /// <inheritdoc/>
-    public ValueTask PublishAsync<T>(string destination, T message,
+    public async ValueTask PublishAsync<T>(string destination, T message,
         PublishOptions? options = null, CancellationToken ct = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -34,17 +47,24 @@ public sealed class AzureServiceBusPublisher(
             if (typeof(T).IsValueType && RawBinaryTypeInfo<T>.IsEligible)
             {
                 var size = UnmanagedBlitSerializer.GetSize<T>();
-                var body = new byte[size];
-                UnmanagedBlitSerializer.Write(in message, body);
-                sbMessage = new ServiceBusMessage(body)
+                var rented = ArrayPool<byte>.Shared.Rent(size);
+                try
                 {
-                    ContentType = WireFormat.RawBinaryContentType,
-                };
+                    UnmanagedBlitSerializer.Write(in message, rented);
+                    sbMessage = new ServiceBusMessage(rented.AsMemory(0, size))
+                    {
+                        ContentType = WireFormat.RawBinaryContentType,
+                    };
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(rented);
+                }
             }
             else
             {
                 var bufferWriter = new ArrayBufferWriter<byte>(4096);
-                var written = serializer.Serialize(message, bufferWriter);
+                var written = _serializer.Serialize(message, bufferWriter);
                 sbMessage = new ServiceBusMessage(bufferWriter.WrittenSpan.Slice(0, written).ToArray())
                 {
                     ContentType = WireFormat.JsonContentType,
@@ -79,20 +99,18 @@ public sealed class AzureServiceBusPublisher(
                 sbMessage.ApplicationProperties["traceparent"] = activity.Id!;
             }
 
-            using var publishActivity = diagnostics.StartPublishActivity(destination, "");
+            using var publishActivity = _diagnostics.StartPublishActivity(destination, "");
 
-            // Use SendMessagesAsync for batch support in Service Bus 7.x.
-            sender.SendMessageAsync(sbMessage, ct).GetAwaiter().GetResult();
+            await _sender.SendMessageAsync(sbMessage, ct).ConfigureAwait(false);
 
-            diagnostics.RecordMessagesPublished(1, sbMessage.ContentType == WireFormat.RawBinaryContentType ? "raw" : "json");
-            logger.LogTrace("Published to Service Bus {Destination}", destination);
-            return ValueTask.CompletedTask;
+            _diagnostics.RecordMessagesPublished(1, sbMessage.ContentType == WireFormat.RawBinaryContentType ? "raw" : "json");
+            _logger.LogTrace("Published to Service Bus {Destination}", destination);
         }
         catch (Exception ex)
         {
-            diagnostics.RecordPublishError();
-            logger.LogError(ex, "Failed to publish to Service Bus {Destination}", destination);
-            return ValueTask.FromException(ex);
+            _diagnostics.RecordPublishError();
+            _logger.LogError(ex, "Failed to publish to Service Bus {Destination}", destination);
+            throw;
         }
     }
 
