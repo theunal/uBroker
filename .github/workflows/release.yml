@@ -34,7 +34,6 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
 
     steps:
@@ -67,13 +66,10 @@ jobs:
           dotnet pack src/uBroker.DependencyInjection/uBroker.DependencyInjection.csproj -c Release -o ./artifacts -p:PackageVersion=${{ steps.version.outputs.VERSION }} --no-build
 
       - name: Verify packages
-        run: |
-          echo "Packages to publish:"
-          ls -la ./artifacts/*.nupkg
-          echo "Expected: 7 packages"
+        run: ls -la ./artifacts/*.nupkg
 
       - name: Push to NuGet
-        run: dotnet nuget push "./artifacts/*.nupkg" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push "./artifacts/*.nupkg" --source "https://api.nuget.org/v3/index.json" --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
 
   github-release:
     needs: publish
@@ -84,13 +80,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: packages
-          path: artifacts
-        continue-on-error: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
