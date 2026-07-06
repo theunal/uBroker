@@ -2,6 +2,16 @@
 bin/
 obj/
 artifacts/
+build/
+dist/
+*.nupkg
+*.snupkg
+
+# Test & coverage
+coverage/
+coveragereport/
+*.trx
+*.coverage
 
 # Environment secrets
 .env
@@ -9,10 +19,17 @@ artifacts/
 # IDE
 .vs/
 .vscode/
+.idea/
+*.sln.ide/
 *.user
 *.suo
+*.sln.docstates
+*.swp
 
 # OS
 Thumbs.db
 .DS_Store
+Desktop.ini
+
+# Benchmarking
 BenchmarkDotNet.Artifacts
