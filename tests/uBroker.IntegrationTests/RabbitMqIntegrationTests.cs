@@ -1,7 +1,5 @@
-using System.Buffers;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using uBroker;
 using Xunit;
 
 namespace uBroker.IntegrationTests;
@@ -45,8 +43,8 @@ public class RabbitMqIntegrationTests : IAsyncLifetime
         var received = new TaskCompletionSource<string>();
 
         // Consumer: declare queue, consume.
-        var consumerChannel = await _connection!.CreateChannelAsync();
-        await consumerChannel.QueueDeclareAsync(queue, durable: true, exclusive: false, autoDelete: false);
+        var consumerChannel = await _connection!.CreateChannelAsync(null, CancellationToken.None);
+        await consumerChannel.QueueDeclareAsync(queue, durable: true, exclusive: false, autoDelete: false, null, false, CancellationToken.None);
         var consumer = new AsyncEventingBasicConsumer(consumerChannel);
         consumer.ReceivedAsync += async (sender, ea) =>
         {
@@ -54,19 +52,20 @@ public class RabbitMqIntegrationTests : IAsyncLifetime
             received.TrySetResult(body);
             await consumerChannel.BasicAckAsync(ea.DeliveryTag, multiple: false);
         };
-        await consumerChannel.BasicConsumeAsync(queue, autoAck: false, consumer: consumer);
+        await consumerChannel.BasicConsumeAsync(queue, autoAck: false, consumer: consumer, CancellationToken.None);
 
         // Publisher: publish to default exchange with queue name as routing key.
-        var publisherChannel = await _connection.CreateChannelAsync();
+        var publisherChannel = await _connection.CreateChannelAsync(null, CancellationToken.None);
         var props = new BasicProperties { DeliveryMode = DeliveryModes.Persistent };
         var body = System.Text.Encoding.UTF8.GetBytes("hello-rabbitmq");
-        await publisherChannel.BasicPublishAsync(exchange: "", routingKey: queue, mandatory: false, basicProperties: props, body: body);
+        await publisherChannel.BasicPublishAsync(exchange: "", routingKey: queue, mandatory: false,
+            basicProperties: props, body: body, CancellationToken.None);
 
-        var result = await received.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        var result = await received.Task.WaitAsync(TimeSpan.FromSeconds(10), CancellationToken.None);
         Assert.Equal("hello-rabbitmq", result);
 
-        await consumerChannel.CloseAsync();
-        await publisherChannel.CloseAsync();
+        await consumerChannel.CloseAsync(CancellationToken.None);
+        await publisherChannel.CloseAsync(CancellationToken.None);
     }
 
     [Fact]
@@ -76,8 +75,8 @@ public class RabbitMqIntegrationTests : IAsyncLifetime
         var received = new List<string>();
         var allReceived = new TaskCompletionSource();
 
-        var consumerChannel = await _connection!.CreateChannelAsync();
-        await consumerChannel.QueueDeclareAsync(queue, durable: true, exclusive: false, autoDelete: false);
+        var consumerChannel = await _connection!.CreateChannelAsync(null, CancellationToken.None);
+        await consumerChannel.QueueDeclareAsync(queue, durable: true, exclusive: false, autoDelete: false, null, false, CancellationToken.None);
         var consumer = new AsyncEventingBasicConsumer(consumerChannel);
         consumer.ReceivedAsync += async (sender, ea) =>
         {
@@ -86,20 +85,20 @@ public class RabbitMqIntegrationTests : IAsyncLifetime
             if (received.Count >= 5) allReceived.TrySetResult();
             await consumerChannel.BasicAckAsync(ea.DeliveryTag, multiple: false);
         };
-        await consumerChannel.BasicConsumeAsync(queue, autoAck: false, consumer: consumer);
+        await consumerChannel.BasicConsumeAsync(queue, autoAck: false, consumer: consumer, CancellationToken.None);
 
-        var publisherChannel = await _connection.CreateChannelAsync();
+        var publisherChannel = await _connection.CreateChannelAsync(null, CancellationToken.None);
         for (int i = 0; i < 5; i++)
         {
             var body = System.Text.Encoding.UTF8.GetBytes($"msg-{i}");
-            await publisherChannel.BasicPublishAsync(exchange: "", routingKey: queue, mandatory: false, body: body);
+            await publisherChannel.BasicPublishAsync(exchange: "", routingKey: queue, mandatory: false, body: body, CancellationToken.None);
         }
 
-        await allReceived.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        await allReceived.Task.WaitAsync(TimeSpan.FromSeconds(10), CancellationToken.None);
         Assert.Equal(5, received.Count);
 
-        await consumerChannel.CloseAsync();
-        await publisherChannel.CloseAsync();
+        await consumerChannel.CloseAsync(CancellationToken.None);
+        await publisherChannel.CloseAsync(CancellationToken.None);
     }
 
     [Fact]
@@ -108,15 +107,15 @@ public class RabbitMqIntegrationTests : IAsyncLifetime
         var queue = $"test.queue.{Guid.NewGuid():N}";
         var received = new TaskCompletionSource<byte[]>();
 
-        var consumerChannel = await _connection!.CreateChannelAsync();
-        await consumerChannel.QueueDeclareAsync(queue, durable: true, exclusive: false, autoDelete: false);
+        var consumerChannel = await _connection!.CreateChannelAsync(null, CancellationToken.None);
+        await consumerChannel.QueueDeclareAsync(queue, durable: true, exclusive: false, autoDelete: false, null, false, CancellationToken.None);
         var consumer = new AsyncEventingBasicConsumer(consumerChannel);
         consumer.ReceivedAsync += async (sender, ea) =>
         {
             received.TrySetResult(ea.Body.ToArray());
             await consumerChannel.BasicAckAsync(ea.DeliveryTag, multiple: false);
         };
-        await consumerChannel.BasicConsumeAsync(queue, autoAck: false, consumer: consumer);
+        await consumerChannel.BasicConsumeAsync(queue, autoAck: false, consumer: consumer, CancellationToken.None);
 
         // Simulate raw binary: struct blit to byte[]
         var original = new StockPrice { ProductId = 100, Price = 25.50m, Timestamp = 1700000000L };
@@ -124,10 +123,10 @@ public class RabbitMqIntegrationTests : IAsyncLifetime
         var buffer = new byte[size];
         System.Runtime.InteropServices.MemoryMarshal.Write(buffer, in original);
 
-        var publisherChannel = await _connection.CreateChannelAsync();
-        await publisherChannel.BasicPublishAsync(exchange: "", routingKey: queue, mandatory: false, body: buffer);
+        var publisherChannel = await _connection.CreateChannelAsync(null, CancellationToken.None);
+        await publisherChannel.BasicPublishAsync(exchange: "", routingKey: queue, mandatory: false, body: buffer, CancellationToken.None);
 
-        var result = await received.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        var result = await received.Task.WaitAsync(TimeSpan.FromSeconds(10), CancellationToken.None);
         Assert.Equal(size, result.Length);
 
         // Deserialize and verify.
@@ -136,8 +135,8 @@ public class RabbitMqIntegrationTests : IAsyncLifetime
         Assert.Equal(25.50m, deserialized.Price);
         Assert.Equal(1700000000L, deserialized.Timestamp);
 
-        await consumerChannel.CloseAsync();
-        await publisherChannel.CloseAsync();
+        await consumerChannel.CloseAsync(CancellationToken.None);
+        await publisherChannel.CloseAsync(CancellationToken.None);
     }
 }
 

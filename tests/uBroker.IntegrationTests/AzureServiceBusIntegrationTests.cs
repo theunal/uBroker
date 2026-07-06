@@ -1,6 +1,5 @@
 using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.Logging.Abstractions;
-using uBroker;
 using uBroker.Azure.Internals;
 using uBroker.Azure.ServiceBus;
 using uBroker.Diagnostics;
@@ -44,7 +43,7 @@ public class AzureServiceBusIntegrationTests : IAsyncLifetime
         return ValueTask.CompletedTask;
     }
 
-    public async ValueTask DisposeAsync()
+    async ValueTask IAsyncDisposable.DisposeAsync()
     {
         _publisher?.Dispose();
         if (_client is not null)
@@ -58,7 +57,7 @@ public class AzureServiceBusIntegrationTests : IAsyncLifetime
     public async Task PublishAsync_ShouldNotThrow()
     {
         var message = new SbTestMessage { Id = 1, Content = "hello" };
-        await _publisher!.PublishAsync("default", message);
+        await _publisher!.PublishAsync("default", message, null, CancellationToken.None);
     }
 
     [Fact]
@@ -72,7 +71,7 @@ public class AzureServiceBusIntegrationTests : IAsyncLifetime
                 {
                     ["custom-header"] = "custom-value",
                 }
-            });
+            }, CancellationToken.None);
     }
 
     [Fact]
@@ -89,7 +88,7 @@ public class AzureServiceBusIntegrationTests : IAsyncLifetime
         await Task.Delay(2000);
 
         var message = new SbTestMessage { Id = 42, Content = "sb-integration" };
-        await _publisher!.PublishAsync("default", message);
+        await _publisher!.PublishAsync("default", message, null, CancellationToken.None);
     }
 }
 

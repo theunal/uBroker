@@ -2,7 +2,6 @@ using Amazon.SQS;
 using Amazon.SQS.Model;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using uBroker;
 using uBroker.Aws.Sqs;
 using uBroker.Aws.Serialization;
 using uBroker.Diagnostics;
@@ -47,7 +46,7 @@ public class AwsSqsIntegrationTests : IAsyncLifetime
 
     private async Task<string> CreateQueueAndGetUrl(string name)
     {
-        var resp = await _sqsClient!.CreateQueueAsync(name);
+        var resp = await _sqsClient!.CreateQueueAsync(name, CancellationToken.None);
         return resp.QueueUrl;
     }
 
@@ -55,7 +54,7 @@ public class AwsSqsIntegrationTests : IAsyncLifetime
     public async Task PublishAsync_ShouldNotThrow()
     {
         var url = await CreateQueueAndGetUrl($"test-{Guid.NewGuid():N}");
-        await _publisher!.PublishAsync(url, new SqsTestMessage { Id = 1, Content = "hello" });
+        await _publisher!.PublishAsync(url, new SqsTestMessage { Id = 1, Content = "hello" }, null, CancellationToken.None);
     }
 
     [Fact]
@@ -63,7 +62,7 @@ public class AwsSqsIntegrationTests : IAsyncLifetime
     {
         var url = await CreateQueueAndGetUrl($"test-{Guid.NewGuid():N}");
         var message = new SqsTestMessage { Id = 42, Content = "sqs-integration" };
-        await _publisher!.PublishAsync(url, message);
+        await _publisher!.PublishAsync(url, message, null, CancellationToken.None);
 
         // Poll directly with SQS client to verify round-trip.
         var response = await _sqsClient!.ReceiveMessageAsync(new ReceiveMessageRequest
@@ -72,7 +71,7 @@ public class AwsSqsIntegrationTests : IAsyncLifetime
             MaxNumberOfMessages = 1,
             WaitTimeSeconds = 5,
             MessageAttributeNames = ["All"],
-        });
+        }, CancellationToken.None);
 
         Assert.Single(response.Messages);
         var body = response.Messages[0].Body;
@@ -84,12 +83,15 @@ public class AwsSqsIntegrationTests : IAsyncLifetime
     {
         var url = await CreateQueueAndGetUrl($"test-{Guid.NewGuid():N}");
         await _publisher!.PublishAsync(url, new SqsTestMessage { Id = 1, Content = "with-headers" },
-            new PublishOptions { Headers = new Dictionary<string, object> { ["source"] = "test" } });
+            new PublishOptions { Headers = new Dictionary<string, object> { ["source"] = "test" } }, CancellationToken.None);
 
         var response = await _sqsClient!.ReceiveMessageAsync(new ReceiveMessageRequest
         {
-            QueueUrl = url, MaxNumberOfMessages = 1, WaitTimeSeconds = 2, MessageAttributeNames = ["All"],
-        });
+            QueueUrl = url,
+            MaxNumberOfMessages = 1,
+            WaitTimeSeconds = 2,
+            MessageAttributeNames = ["All"],
+        }, CancellationToken.None);
 
         Assert.Single(response.Messages);
         Assert.True(response.Messages[0].MessageAttributes.ContainsKey("source"));

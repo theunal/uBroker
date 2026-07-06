@@ -1,12 +1,8 @@
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Amazon.SimpleNotificationService;
-using Amazon.SimpleNotificationService.Model;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
-using uBroker;
 using uBroker.Aws.Sns;
-using uBroker.Aws.Sqs;
 using uBroker.Aws.Serialization;
 using uBroker.Diagnostics;
 using Xunit;
@@ -70,27 +66,27 @@ public class SnsToSqsIntegrationTests : IAsyncLifetime
     {
         // 1. Create SQS queue
         var queueName = $"ubroker-sns-sqs-{Guid.NewGuid():N}";
-        var createQueueResp = await _sqsClient!.CreateQueueAsync(queueName);
+        var createQueueResp = await _sqsClient!.CreateQueueAsync(queueName, CancellationToken.None);
         var queueUrl = createQueueResp.QueueUrl;
 
         // Get queue ARN
         var queueAttrResp = await _sqsClient.GetQueueAttributesAsync(queueUrl,
-            ["QueueArn"]);
+            ["QueueArn"], CancellationToken.None);
         var queueArn = queueAttrResp.Attributes["QueueArn"];
 
         // 2. Create SNS topic
-        var topicResp = await _snsClient!.CreateTopicAsync($"ubroker-test-{Guid.NewGuid():N}");
+        var topicResp = await _snsClient!.CreateTopicAsync($"ubroker-test-{Guid.NewGuid():N}", CancellationToken.None);
         var topicArn = topicResp.TopicArn;
 
         // 3. Subscribe SQS queue to SNS topic
-        await _snsClient.SubscribeAsync(topicArn, "sqs", queueArn);
+        await _snsClient.SubscribeAsync(topicArn, "sqs", queueArn, CancellationToken.None);
 
         // Allow subscription propagation in LocalStack
-        await Task.Delay(1000);
+        await Task.Delay(1000, CancellationToken.None);
 
         // 4. Publish via uBroker SNS publisher
         var message = new SnsTestMessage { Id = 99, Content = "sns-to-sqs" };
-        await _snsPublisher!.PublishAsync(topicArn, message);
+        await _snsPublisher!.PublishAsync(topicArn, message, null, CancellationToken.None);
 
         // 5. Poll SQS to verify message arrived
         var received = false;
@@ -102,7 +98,7 @@ public class SnsToSqsIntegrationTests : IAsyncLifetime
                 MaxNumberOfMessages = 1,
                 WaitTimeSeconds = 2,
                 MessageAttributeNames = ["All"],
-            });
+            }, CancellationToken.None);
 
             if (receiveResp.Messages.Count > 0)
             {
@@ -116,31 +112,31 @@ public class SnsToSqsIntegrationTests : IAsyncLifetime
         Assert.True(received, "Message did not arrive in SQS queue within timeout");
 
         // Cleanup
-        var subs = await _snsClient.ListSubscriptionsByTopicAsync(topicArn);
+        var subs = await _snsClient.ListSubscriptionsByTopicAsync(topicArn, CancellationToken.None);
         foreach (var sub in subs.Subscriptions)
-            await _snsClient.UnsubscribeAsync(sub.SubscriptionArn);
-        await _snsClient.DeleteTopicAsync(topicArn);
-        await _sqsClient.DeleteQueueAsync(queueUrl);
+            await _snsClient.UnsubscribeAsync(sub.SubscriptionArn, CancellationToken.None);
+        await _snsClient.DeleteTopicAsync(topicArn, CancellationToken.None);
+        await _sqsClient.DeleteQueueAsync(queueUrl, CancellationToken.None);
     }
 
     [Fact]
     public async Task PublishToSns_WithHeaders_PropagatedToSqs()
     {
         var queueName = $"ubroker-sns-headers-{Guid.NewGuid():N}";
-        var createQueueResp = await _sqsClient!.CreateQueueAsync(queueName);
+        var createQueueResp = await _sqsClient!.CreateQueueAsync(queueName, CancellationToken.None);
         var queueUrl = createQueueResp.QueueUrl;
 
-        var queueAttrResp = await _sqsClient.GetQueueAttributesAsync(queueUrl, ["QueueArn"]);
+        var queueAttrResp = await _sqsClient.GetQueueAttributesAsync(queueUrl, ["QueueArn"], CancellationToken.None);
         var queueArn = queueAttrResp.Attributes["QueueArn"];
 
-        var topicResp = await _snsClient!.CreateTopicAsync($"ubroker-hdr-{Guid.NewGuid():N}");
+        var topicResp = await _snsClient!.CreateTopicAsync($"ubroker-hdr-{Guid.NewGuid():N}", CancellationToken.None);
         var topicArn = topicResp.TopicArn;
 
-        await _snsClient.SubscribeAsync(topicArn, "sqs", queueArn);
-        await Task.Delay(1000);
+        await _snsClient.SubscribeAsync(topicArn, "sqs", queueArn, CancellationToken.None);
+        await Task.Delay(1000, CancellationToken.None);
 
         await _snsPublisher!.PublishAsync(topicArn, new SnsTestMessage { Id = 1, Content = "with-headers" },
-            new PublishOptions { Headers = new Dictionary<string, object> { ["custom-key"] = "custom-value" } });
+            new PublishOptions { Headers = new Dictionary<string, object> { ["custom-key"] = "custom-value" } }, CancellationToken.None);
 
         var received = false;
         for (int i = 0; i < 10; i++)
@@ -151,7 +147,7 @@ public class SnsToSqsIntegrationTests : IAsyncLifetime
                 MaxNumberOfMessages = 1,
                 WaitTimeSeconds = 2,
                 MessageAttributeNames = ["All"],
-            });
+            }, CancellationToken.None);
 
             if (receiveResp.Messages.Count > 0)
             {
@@ -164,11 +160,11 @@ public class SnsToSqsIntegrationTests : IAsyncLifetime
 
         Assert.True(received, "Message with headers did not arrive in SQS queue");
 
-        var subs2 = await _snsClient.ListSubscriptionsByTopicAsync(topicArn);
+        var subs2 = await _snsClient.ListSubscriptionsByTopicAsync(topicArn, CancellationToken.None);
         foreach (var sub in subs2.Subscriptions)
-            await _snsClient.UnsubscribeAsync(sub.SubscriptionArn);
-        await _snsClient.DeleteTopicAsync(topicArn);
-        await _sqsClient.DeleteQueueAsync(queueUrl);
+            await _snsClient.UnsubscribeAsync(sub.SubscriptionArn, CancellationToken.None);
+        await _snsClient.DeleteTopicAsync(topicArn, CancellationToken.None);
+        await _sqsClient.DeleteQueueAsync(queueUrl, CancellationToken.None);
     }
 }
 
