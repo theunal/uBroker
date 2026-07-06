@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using uBroker.Diagnostics;
 using uBroker.Azure.Internals;
+using uBroker.RawBinary;
 
 namespace uBroker.Azure.EventHubs;
 

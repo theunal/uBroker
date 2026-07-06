@@ -5,6 +5,7 @@ using Amazon.SQS.Model;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using uBroker.Diagnostics;
+using uBroker.RawBinary;
 
 namespace uBroker.Aws.Sqs;
 

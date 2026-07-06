@@ -122,11 +122,16 @@ services.AddKeyedSingleton<IUBrokerPublisher>("kafka", sp => ...);
 ## Observability
 
 All providers share:
-- **Meter**: `uBroker.Publish.Count`, `uBroker.Consume.Count`, `uBroker.Batch.Size`
-- **Tracing**: `traceparent` header propagated via each broker's native header mechanism
+- **Meter** (`uBroker`):
+  - `ubroker.publish.messages` — total messages published (tag: `serializer`)
+  - `ubroker.consume.messages` — total messages consumed (tag: `serializer`)
+  - `ubroker.publish.batch.size` — histogram of batch sizes at flush
+  - `ubroker.publish.latency` — end-to-end publish latency (ms)
+  - `ubroker.publish.errors` — failed deliveries
+  - `ubroker.channel.pool.rent` / `ubroker.channel.pool.return` — channel pool ops
+  - `ubroker.channel.active` — currently rented channels
+- **Tracing** (`ActivitySource`): `traceparent` header propagated via each broker's native header mechanism
 - **Health Checks**: connection/client status per provider
-
-Metrics include a `serializer` tag (`"raw"` or `"json"`) on publish/consume counters for filtering in dashboards.
 
 ## High-Performance Raw Binary Path
 
@@ -178,10 +183,29 @@ That's it. Publishers and consumers automatically detect the attribute and use t
 dotnet run --project benchmarks/uBroker.Benchmarks -c Release -- --filter *RawBinary*
 ```
 
+## Local Development
+
+```bash
+# Start all broker emulators (RabbitMQ, Kafka KRaft, Azure SB, Azurite, LocalStack)
+docker compose up -d
+
+# Tear down including volumes
+docker compose down -v
+```
+
+| Service | Port | Purpose |
+|---|---|---|
+| RabbitMQ | 5673 (AMQP), 15672 (UI) | Management UI at localhost:15672 |
+| Kafka | 9092 | KRaft mode, no ZooKeeper |
+| Azure SB Emulator | 5672 | Pre-configured queues/topics |
+| Azurite | 10000-10002 | Blob/Queue/Table storage |
+| LocalStack | 4566 | SQS + SNS emulation |
+
 ## Requirements
 
 - .NET 10 SDK
-- RabbitMQ 3.8+ (for RabbitMQ provider)
+- Docker (for local development and integration tests)
+- RabbitMQ 4.3+ (for RabbitMQ provider)
 - Kafka/Redpanda (for Kafka provider)
 - Azure subscription (for Service Bus / Event Hubs providers)
 - AWS account (for SQS / SNS providers)

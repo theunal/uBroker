@@ -2,6 +2,7 @@ using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.Logging;
 using uBroker.Azure.Internals;
 using uBroker.Diagnostics;
+using uBroker.RawBinary;
 
 namespace uBroker.Azure.ServiceBus;
 

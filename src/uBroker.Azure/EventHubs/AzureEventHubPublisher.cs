@@ -4,6 +4,7 @@ using Azure.Messaging.EventHubs.Producer;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using uBroker.Diagnostics;
+using uBroker.RawBinary;
 
 namespace uBroker.Azure.EventHubs;
 

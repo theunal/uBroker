@@ -4,9 +4,9 @@ using System.Text;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using uBroker;
 using uBroker.Diagnostics;
 using uBroker.Kafka.Serialization;
+using uBroker.RawBinary;
 
 namespace uBroker.Kafka;
 

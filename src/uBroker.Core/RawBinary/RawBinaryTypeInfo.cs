@@ -2,22 +2,8 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace uBroker;
+namespace uBroker.RawBinary;
 
-/// <summary>
-/// Per-type static cache for raw binary eligibility. Computes once per T
-/// via CLR type-initialization (thread-safe, no lock needed).
-///
-/// No struct constraint on T — eligibility is checked at runtime via
-/// typeof(T).IsValueType. This allows callers with unconstrained T
-/// (like PublishAsync&lt;T&gt;) to check eligibility without compilation errors.
-///
-/// Eligibility rules:
-/// 1. T must be a value type (struct) — checked at runtime.
-/// 2. T must not contain reference types — checked via field inspection.
-/// 3. T must have [UBrokerRawBinary] attribute (explicit opt-in).
-/// 4. T must have [StructLayout(LayoutKind.Sequential)] or Explicit.
-/// </summary>
 internal static class RawBinaryTypeInfo<T>
 {
     public static readonly bool IsEligible = Compute();
@@ -26,15 +12,19 @@ internal static class RawBinaryTypeInfo<T>
     {
         var type = typeof(T);
 
+        // 1. Value type olmalı
         if (!type.IsValueType)
             return false;
 
-        if (ContainsReferenceFields(type))
+        // 2. Referans içermemeli (intrinsic, reflection yok)
+        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
             return false;
 
+        // 3. Opt-in attribute zorunlu
         if (type.GetCustomAttribute<UBrokerRawBinaryAttribute>() is null)
             return false;
 
+        // 4. Layout kontrolü (Sequential veya Explicit)
         var layout = type.StructLayoutAttribute;
         if (layout is null || layout.Value == LayoutKind.Auto)
         {
@@ -45,23 +35,5 @@ internal static class RawBinaryTypeInfo<T>
         }
 
         return true;
-    }
-
-    private static bool ContainsReferenceFields(Type type)
-    {
-        var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        foreach (var field in fields)
-        {
-            var ft = field.FieldType;
-            if (ft.IsClass || ft.IsInterface || ft.IsPointer || ft.IsByRef)
-                return true;
-            if (ft.IsEnum)
-            {
-                var underlying = Enum.GetUnderlyingType(ft);
-                if (underlying == typeof(nint) || underlying == typeof(nuint))
-                    return true;
-            }
-        }
-        return false;
     }
 }

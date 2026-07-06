@@ -6,6 +6,7 @@ using RabbitMQ.Client;
 using uBroker.Diagnostics;
 using uBroker.RabbitMQ.Internals;
 using uBroker.RabbitMQ.Serialization;
+using uBroker.RawBinary;
 
 namespace uBroker.RabbitMQ;
 
