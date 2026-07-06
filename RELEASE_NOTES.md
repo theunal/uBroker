@@ -51,3 +51,18 @@ No API changes — `PublishAsync<T>` and `Subscribe<T>` work as before.
 
 - 27 unit tests (RawBinary serialization, eligibility, wire format)
 - 14 integration tests (RabbitMQ, Kafka, Azure Service Bus, AWS SQS, SNS→SQS)
+
+### Benchmark Results (AMD Ryzen 7 4800H, .NET 10.0)
+
+```
+| Method          |        Mean |  Allocated |
+|---------------- |------------:|-----------:|
+| JsonSerialize   |   55.05 ns  |      184 B |
+| RawSerialize    |    0.25 ns  |        0 B |
+| JsonDeserialize |  208.53 ns  |      232 B |
+| RawDeserialize  |    1.76 ns  |        0 B |
+```
+
+- **223x faster** serialization (55 ns → 0.25 ns)
+- **118x faster** deserialization (209 ns → 1.76 ns)
+- **Zero heap allocation** on raw binary path
