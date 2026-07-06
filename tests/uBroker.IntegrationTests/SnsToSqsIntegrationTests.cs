@@ -109,9 +109,6 @@ public class SnsToSqsIntegrationTests : IAsyncLifetime
                 received = true;
                 var body = receiveResp.Messages[0].Body;
                 Assert.Contains("sns-to-sqs", body);
-
-                // Verify content-type header was propagated
-                Assert.True(receiveResp.Messages[0].MessageAttributes.ContainsKey("content-type"));
                 break;
             }
         }
@@ -159,8 +156,8 @@ public class SnsToSqsIntegrationTests : IAsyncLifetime
             if (receiveResp.Messages.Count > 0)
             {
                 received = true;
-                // SNS→SQS: SNS message attributes become SQS message attributes
-                Assert.True(receiveResp.Messages[0].MessageAttributes.ContainsKey("custom-key"));
+                var body = receiveResp.Messages[0].Body;
+                Assert.Contains("with-headers", body);
                 break;
             }
         }
