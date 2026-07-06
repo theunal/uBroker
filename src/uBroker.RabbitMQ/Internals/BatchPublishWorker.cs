@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,8 @@ public sealed class PublishRequest
     public required ReadOnlyMemory<byte> Body { get; init; }
     public required BasicProperties Properties { get; init; }
     public required TaskCompletionSource Tcs { get; init; }
+    /// <summary>ArrayPool'dan kiralanan buffer — publish sonrası iade edilmeli.</summary>
+    public byte[]? RentedBuffer { get; init; }
 }
 
 /// <summary>
@@ -180,6 +183,12 @@ public sealed class BatchPublishWorker : BackgroundService
                     basicProperties: request.Properties,
                     body: request.Body,
                     cancellationToken: ct).ConfigureAwait(false);
+
+                // ArrayPool'dan kiralanan buffer'ı publish sonrası iade et.
+                if (request.RentedBuffer is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(request.RentedBuffer);
+                }
 
                 request.Tcs.TrySetResult();
             }

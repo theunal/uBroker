@@ -42,14 +42,21 @@ public sealed class AwsSqsPublisher(
             if (typeof(T).IsValueType && RawBinaryTypeInfo<T>.IsEligible)
             {
                 var size = UnmanagedBlitSerializer.GetSize<T>();
-                var body = new byte[size];
-                UnmanagedBlitSerializer.Write(in message, body);
-                request = new SendMessageRequest
+                var rented = System.Buffers.ArrayPool<byte>.Shared.Rent(size);
+                try
                 {
-                    QueueUrl = destination,
-                    MessageBody = Convert.ToBase64String(body),
-                    MessageAttributes = new Dictionary<string, MessageAttributeValue>(),
-                };
+                    UnmanagedBlitSerializer.Write(in message, rented);
+                    request = new SendMessageRequest
+                    {
+                        QueueUrl = destination,
+                        MessageBody = Convert.ToBase64String(rented, 0, size),
+                        MessageAttributes = new Dictionary<string, MessageAttributeValue>(),
+                    };
+                }
+                finally
+                {
+                    System.Buffers.ArrayPool<byte>.Shared.Return(rented);
+                }
                 request.MessageAttributes[WireFormat.ContentTypeHeaderKey] = new MessageAttributeValue
                 {
                     DataType = "String",

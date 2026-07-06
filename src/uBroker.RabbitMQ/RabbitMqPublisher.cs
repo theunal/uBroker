@@ -61,14 +61,16 @@ public sealed class RabbitMqPublisher : IUBrokerPublisher, IAsyncDisposable, IDi
         {
             ReadOnlyMemory<byte> buffer;
             string contentType;
+            byte[]? rentedBuffer = null;
 
             if (typeof(T).IsValueType && RawBinaryTypeInfo<T>.IsEligible)
             {
                 var size = UnmanagedBlitSerializer.GetSize<T>();
-                var body = new byte[size];
-                UnmanagedBlitSerializer.Write(in message, body);
-                buffer = body;
+                var rented = ArrayPool<byte>.Shared.Rent(size);
+                UnmanagedBlitSerializer.Write(in message, rented);
+                buffer = rented.AsMemory(0, size);
                 contentType = WireFormat.RawBinaryContentType;
+                rentedBuffer = rented;
             }
             else
             {
@@ -76,6 +78,7 @@ public sealed class RabbitMqPublisher : IUBrokerPublisher, IAsyncDisposable, IDi
                 var written = _jsonSerializer.Serialize(message, bufferWriter);
                 buffer = bufferWriter.WrittenMemory;
                 contentType = WireFormat.JsonContentType;
+                rentedBuffer = null;
             }
 
             // Build BasicProperties inline.
@@ -124,6 +127,7 @@ public sealed class RabbitMqPublisher : IUBrokerPublisher, IAsyncDisposable, IDi
                 Body = buffer,
                 Properties = props,
                 Tcs = tcs,
+                RentedBuffer = rentedBuffer,
             };
 
             if (!_batchWorker.Writer.TryWrite(request))

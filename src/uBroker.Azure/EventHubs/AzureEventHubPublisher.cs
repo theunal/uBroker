@@ -51,10 +51,17 @@ public sealed class AzureEventHubPublisher(
             if (typeof(T).IsValueType && RawBinaryTypeInfo<T>.IsEligible)
             {
                 var size = UnmanagedBlitSerializer.GetSize<T>();
-                var body = new byte[size];
-                UnmanagedBlitSerializer.Write(in message, body);
-                eventData = new EventData(body);
-                eventData.Properties[WireFormat.ContentTypeHeaderKey] = WireFormat.RawBinaryContentType;
+                var rented = System.Buffers.ArrayPool<byte>.Shared.Rent(size);
+                try
+                {
+                    UnmanagedBlitSerializer.Write(in message, rented);
+                    eventData = new EventData(rented.AsMemory(0, size));
+                    eventData.Properties[WireFormat.ContentTypeHeaderKey] = WireFormat.RawBinaryContentType;
+                }
+                finally
+                {
+                    System.Buffers.ArrayPool<byte>.Shared.Return(rented);
+                }
             }
             else
             {
