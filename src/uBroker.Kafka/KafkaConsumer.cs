@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using uBroker.Diagnostics;
 using uBroker.Kafka.Serialization;
-using uBroker.RawBinary;
 
 namespace uBroker.Kafka;
 

@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace uBroker.RawBinary;
+namespace uBroker;
 
 internal static class RawBinaryTypeInfo<T>
 {

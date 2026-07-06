@@ -4,7 +4,6 @@ using Amazon.SimpleNotificationService;
 using Amazon.SimpleNotificationService.Model;
 using Microsoft.Extensions.Logging;
 using uBroker.Diagnostics;
-using uBroker.RawBinary;
 
 namespace uBroker.Aws.Sns;
 

@@ -16,5 +16,5 @@ namespace uBroker;
 /// - No cross-language interop (only .NET-to-.NET).
 /// - Byte layout depends on runtime's struct packing (StructLayout guarantees this).
 /// </summary>
-[AttributeUsage(AttributeTargets.Struct)]
+[AttributeUsage(AttributeTargets.Struct, Inherited = false)]
 public sealed class UBrokerRawBinaryAttribute : Attribute { }

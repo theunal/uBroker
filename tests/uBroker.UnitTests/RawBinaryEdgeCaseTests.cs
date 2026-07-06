@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using uBroker.RawBinary;
 using Xunit;
 
 namespace uBroker.UnitTests;

@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using uBroker.Aws.Serialization;
 using uBroker.Diagnostics;
-using uBroker.RawBinary;
 
 namespace uBroker.Aws.Sqs;
 

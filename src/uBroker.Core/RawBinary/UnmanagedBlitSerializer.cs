@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -5,46 +6,49 @@ namespace uBroker;
 
 /// <summary>
 /// Span-based blit serializer for unmanaged structs. Uses Unsafe.As + Marshal
-/// so callers don't need the struct constraint or unsafe context.
-///
-/// The absence of 'where T : struct' is intentional: it allows callers with
-/// unconstrained T (like PublishAsync&lt;T&gt;) to call these methods after a
-/// runtime typeof(T).IsValueType check. The methods internally verify the
-/// type is a value type and throw if not.
+/// for zero-allocation memory reinterpretation.
 ///
 /// Guarantees:
 /// - Zero heap allocation on both serialize and deserialize paths.
 /// - Direct memory copy — no field-by-field reflection.
+/// - Size cached per type via SizeCache&lt;T&gt; (JIT static constructor).
 /// - Caller manages buffer lifetime (ArrayPool, new byte[], etc.).
 /// </summary>
+/// 
 internal static class UnmanagedBlitSerializer
 {
-    /// <summary>Get the in-memory size of T using Marshal (no struct constraint needed).</summary>
-    public static int GetSize<T>() => Marshal.SizeOf(typeof(T));
+    public static int GetSize<T>() => SizeCache<T>.Value;
 
-    /// <summary>
-    /// Write a value into the destination span. Uses Unsafe.As for zero-alloc
-    /// memory reinterpretation without requiring a struct constraint.
-    /// </summary>
     public static void Write<T>(in T message, Span<byte> destination)
     {
-        int size = Marshal.SizeOf(typeof(T));
+        int size = SizeCache<T>.Value;
+        if (destination.Length < size)
+            ThrowBufferTooSmall(destination.Length, size);
+
         ref byte src = ref Unsafe.As<T, byte>(ref Unsafe.AsRef(in message));
         ref byte dest = ref MemoryMarshal.GetReference(destination);
         Unsafe.CopyBlock(ref dest, ref src, (uint)size);
     }
 
-    /// <summary>
-    /// Read a value from the source span. Uses Unsafe.As for zero-alloc
-    /// memory reinterpretation without requiring a struct constraint.
-    /// </summary>
     public static T Read<T>(ReadOnlySpan<byte> source)
     {
+        int size = SizeCache<T>.Value;
+        if (source.Length < size)
+            ThrowBufferTooSmall(source.Length, size);
+
         T result = default!;
-        int size = Marshal.SizeOf(typeof(T));
         ref byte src = ref MemoryMarshal.GetReference(source);
         ref byte dest = ref Unsafe.As<T, byte>(ref result);
         Unsafe.CopyBlock(ref dest, ref src, (uint)size);
         return result;
     }
+
+    private static class SizeCache<T>
+    {
+        public static readonly int Value = Marshal.SizeOf<T>();
+    }
+
+    [DoesNotReturn]
+    private static void ThrowBufferTooSmall(int actual, int expected) =>
+        throw new ArgumentException($"Buffer too small. Required: {expected}, Actual: {actual}");
 }
