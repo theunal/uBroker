@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>uBroker</RootNamespace>
+    <Description>High-performance, zero-allocation messaging abstractions for .NET</Description>
+    <PackageTags>messaging;broker;high-performance;zero-allocation</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="uBroker.RabbitMQ" />
+    <InternalsVisibleTo Include="uBroker.Kafka" />
+    <InternalsVisibleTo Include="uBroker.Azure" />
+    <InternalsVisibleTo Include="uBroker.Aws" />
+    <InternalsVisibleTo Include="uBroker.DependencyInjection" />
+    <InternalsVisibleTo Include="uBroker.UnitTests" />
+    <InternalsVisibleTo Include="uBroker.Benchmarks" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,16 @@
+# Build
+bin/
+obj/
+
+# Environment secrets
+.env
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# OS
+Thumbs.db
+.DS_Store

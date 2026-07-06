@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\uBroker.Core\uBroker.Core.csproj" />
+    <ProjectReference Include="..\..\src\uBroker.RabbitMQ\uBroker.RabbitMQ.csproj" />
+    <ProjectReference Include="..\..\src\uBroker.Kafka\uBroker.Kafka.csproj" />
+    <ProjectReference Include="..\..\src\uBroker.Azure\uBroker.Azure.csproj" />
+    <ProjectReference Include="..\..\src\uBroker.Aws\uBroker.Aws.csproj" />
+    <ProjectReference Include="..\..\src\uBroker.DependencyInjection\uBroker.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\src\uBroker.Diagnostics\uBroker.Diagnostics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.*" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.*" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.*" />
+    <PackageReference Include="Confluent.Kafka" Version="2.*" />
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.*" />
+    <PackageReference Include="AWSSDK.SQS" Version="4.*" />
+  </ItemGroup>
+
+</Project>

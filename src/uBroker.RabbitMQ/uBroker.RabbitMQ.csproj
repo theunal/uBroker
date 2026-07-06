@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>uBroker.RabbitMQ</RootNamespace>
+    <Description>RabbitMQ implementation for uBroker — zero-allocation, batch-optimized publisher and consumer</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="uBroker.DependencyInjection" />
+    <InternalsVisibleTo Include="uBroker.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\uBroker.Core\uBroker.Core.csproj" />
+    <ProjectReference Include="..\uBroker.Diagnostics\uBroker.Diagnostics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RabbitMQ.Client" Version="7.*" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.*" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,17 @@
+<Solution>
+  <Project Path="src\uBroker.Core\uBroker.Core.csproj" />
+  <Project Path="src\uBroker.RabbitMQ\uBroker.RabbitMQ.csproj" />
+  <Project Path="src\uBroker.Kafka\uBroker.Kafka.csproj" />
+  <Project Path="src\uBroker.Azure\uBroker.Azure.csproj" />
+  <Project Path="src\uBroker.Aws\uBroker.Aws.csproj" />
+  <Project Path="src\uBroker.DependencyInjection\uBroker.DependencyInjection.csproj" />
+  <Project Path="src\uBroker.Diagnostics\uBroker.Diagnostics.csproj" />
+  <Project Path="tests\uBroker.UnitTests\uBroker.UnitTests.csproj" />
+  <Project Path="tests\uBroker.IntegrationTests\uBroker.IntegrationTests.csproj" />
+  <Project Path="benchmarks\uBroker.Benchmarks\uBroker.Benchmarks.csproj" />
+  <Project Path="samples\uBroker.Sample.Producer\uBroker.Sample.Producer.csproj" />
+  <Project Path="samples\uBroker.Sample.Consumer\uBroker.Sample.Consumer.csproj" />
+  <Project Path="samples\uBroker.Sample.Kafka\uBroker.Sample.Kafka.csproj" />
+  <Project Path="samples\uBroker.Sample.Azure\uBroker.Sample.Azure.csproj" />
+  <Project Path="samples\uBroker.Sample.Aws\uBroker.Sample.Aws.csproj" />
+</Solution>

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>uBroker.Azure</RootNamespace>
+    <Description>Azure Service Bus + Event Hubs implementation for uBroker</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\uBroker.Core\uBroker.Core.csproj" />
+    <ProjectReference Include="..\uBroker.Diagnostics\uBroker.Diagnostics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.*" />
+    <PackageReference Include="Azure.Messaging.EventHubs" Version="5.*" />
+    <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.*" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.*" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.*" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>uBroker.DependencyInjection</RootNamespace>
+    <Description>Dependency injection extensions for uBroker — AddUBroker() registration</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\uBroker.Core\uBroker.Core.csproj" />
+    <ProjectReference Include="..\uBroker.RabbitMQ\uBroker.RabbitMQ.csproj" />
+    <ProjectReference Include="..\uBroker.Kafka\uBroker.Kafka.csproj" />
+    <ProjectReference Include="..\uBroker.Azure\uBroker.Azure.csproj" />
+    <ProjectReference Include="..\uBroker.Aws\uBroker.Aws.csproj" />
+    <ProjectReference Include="..\uBroker.Diagnostics\uBroker.Diagnostics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.*" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.*" />
+    <PackageReference Include="Confluent.Kafka" Version="2.*" />
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.*" />
+    <PackageReference Include="Azure.Messaging.EventHubs" Version="5.*" />
+    <PackageReference Include="AWSSDK.SQS" Version="4.0.100.2" />
+    <PackageReference Include="AWSSDK.SimpleNotificationService" Version="4.0.100.2" />
+  </ItemGroup>
+
+</Project>
